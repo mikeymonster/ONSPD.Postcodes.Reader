@@ -361,3 +361,15 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# VsCode cache folder
+.vscode/
+
+# Benchmark.Net folder
+BenchmarkDotNet.Artifacts/
+
+# Local development settings files - may contain secrets
+appsettings.Development.json
+
+# Developer settings in function projects
+local.settings.development.json

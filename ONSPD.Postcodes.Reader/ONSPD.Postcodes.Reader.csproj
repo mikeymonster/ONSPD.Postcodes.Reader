@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,12 +9,19 @@
     <None Remove="SQL Scripts\001-Tables.sql" />
     <None Remove="SQL Scripts\002-Table Valued Function Types.sql" />
     <None Remove="SQL Scripts\003-Upsert Procedures.sql" />
+    <None Remove="SQL Scripts\004-Add Geography Column.sql" />
+    <None Remove="SQL Scripts\004-Modify Upsert Set Geometry.sql" />
+    <None Remove="SQL Scripts\005-Update Geography.sql" />
+    <None Remove="SQL Scripts\006-Modify Upsert Set Geometry.sql" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="SQL Scripts\001-Tables.sql" />
     <EmbeddedResource Include="SQL Scripts\002-Table Valued Function Types.sql" />
     <EmbeddedResource Include="SQL Scripts\003-Upsert Procedures.sql" />
+    <EmbeddedResource Include="SQL Scripts\004-Add Geography Column.sql" />
+    <EmbeddedResource Include="SQL Scripts\005-Update Geography.sql" />
+    <EmbeddedResource Include="SQL Scripts\006-Modify Upsert Set Geometry.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
