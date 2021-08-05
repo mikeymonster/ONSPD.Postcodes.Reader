@@ -33,9 +33,7 @@ namespace ONSPD.Postcodes.Reader.Services
         {
             var path = _configuration.GetValue<string>("PostcodesFilePath");
 
-            var count = 0L;
             var postcodesDictionary = new Dictionary<string, PostcodeLocation>();
-
             try
             {
                 //var existingPostcodes = await _dataRepository.GetPostcodes();
@@ -64,10 +62,13 @@ namespace ONSPD.Postcodes.Reader.Services
                         Postcode = reader.GetField<string>("pcds"),
                         Latitude = reader.GetField<double>("lat"),
                         Longitude = reader.GetField<double>("long")
+                        //date introduced in dointr - yyyymm
+                        //date terminated in doterm - yyyymm
                     };
 
                     //https://andrewlock.net/why-is-string-gethashcode-different-each-time-i-run-my-program-in-net-core/
                     //var hashCode = postcode.Postcode.GetHashCode();
+                    //var hashCode = postcode.Postcode;
                     var hashCode = CreateMD5Hash(postcode.Postcode);
                     if (postcodesDictionary.ContainsKey(hashCode))
                     {
@@ -75,11 +76,8 @@ namespace ONSPD.Postcodes.Reader.Services
                     }
 
                     postcodesDictionary.Add(hashCode, postcode);
-                    //await _dataRepository.AddPostcode(postcode);
 
-                    //_logger.LogInformation($"{postcodesDictionary.Count} - {postcode.Postcode} - {postcode.Latitude}, {postcode.Longitude}");
-
-                    //if (postcodesDictionary.Count >= 5) break;
+                    //if (postcodesDictionary.Count >= 10) break;
                 }
 
                 stopwatch.Stop();
@@ -87,13 +85,13 @@ namespace ONSPD.Postcodes.Reader.Services
 
                 stopwatch.Restart();
 
-                await _dataRepository.UpsertPostcodes(postcodesDictionary.Values);
+                //await _dataRepository.UpsertPostcodes(postcodesDictionary.Values);
+                await _dataRepository.UpsertPostcodesUsingAdo(postcodesDictionary.Values);
 
                 stopwatch.Stop();
                 _logger.LogInformation($"Saved postcodes to database. Time taken {stopwatch.ElapsedMilliseconds:#,##0}ms ({stopwatch.ElapsedTicks} ticks)");
-
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

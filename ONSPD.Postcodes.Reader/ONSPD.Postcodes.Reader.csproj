@@ -13,6 +13,7 @@
     <None Remove="SQL Scripts\004-Modify Upsert Set Geometry.sql" />
     <None Remove="SQL Scripts\005-Update Geography.sql" />
     <None Remove="SQL Scripts\006-Modify Upsert Set Geometry.sql" />
+    <None Remove="SQL Scripts\007-Modify Upsert Set Geometry To Improve Geometry Set.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,6 +22,7 @@
     <EmbeddedResource Include="SQL Scripts\003-Upsert Procedures.sql" />
     <EmbeddedResource Include="SQL Scripts\004-Add Geography Column.sql" />
     <EmbeddedResource Include="SQL Scripts\005-Update Geography.sql" />
+    <EmbeddedResource Include="SQL Scripts\007-Modify Upsert Set Geometry To Improve Geometry Set.sql" />
     <EmbeddedResource Include="SQL Scripts\006-Modify Upsert Set Geometry.sql" />
   </ItemGroup>
 

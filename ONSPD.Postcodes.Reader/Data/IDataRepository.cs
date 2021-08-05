@@ -10,5 +10,6 @@ namespace ONSPD.Postcodes.Reader.Data
         Task<IEnumerable<PostcodeLocation>> GetPostcodes();
         Task AddPostcode(PostcodeLocation postcode);
         Task UpsertPostcodes(IEnumerable<PostcodeLocation> postcodes);
+        Task UpsertPostcodesUsingAdo(IEnumerable<PostcodeLocation> postcodes);
     }
 }

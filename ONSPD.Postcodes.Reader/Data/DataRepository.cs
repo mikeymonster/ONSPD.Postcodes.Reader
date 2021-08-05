@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.IdentityModel.Protocols;
 using System.Data;
+using System.Data.Common;
 
 namespace ONSPD.Postcodes.Reader.Data
 {
@@ -40,17 +41,50 @@ namespace ONSPD.Postcodes.Reader.Data
             //https://stackoverflow.com/questions/19957132/pass-dictionarystring-int-to-stored-procedure-t-sql/25815939#25815939
             //https://stackoverflow.com/questions/25770180/how-can-i-insert-10-million-records-in-the-shortest-time-possible/25773471#25773471
 
+            //TODO: Try with ADO - will it stream properly?
+            //https://www.sommarskog.se/arrays-in-sql-2008.html
+            //https://www.mssqltips.com/sqlservertip/2338/streaming-rows-of-sql-server-data-to-a-table-valued-parameter-using-a-sqldatareader/
+
+            //https://gist.github.com/taylorkj/9012616
+            //https://github.com/DapperLib/Dapper/blob/61e965eed900355e0dbd27771d6469248d798293/Dapper.Tests/Tests.Parameters.cs
+
+            //https://rikgarner.co.uk/2018/03/using-table-valued-parameters-in-dapper/
+
             //Testing
             //https://nsubstitute.github.io/help/nsubstitute-analysers/
             //https://mikhail.io/2016/02/unit-testing-dapper-repositories/
 
             using var connection = new SqlConnection(_connectionString);
-            connection.Execute("Postcode_Upsert",
+            await connection.ExecuteAsync("Postcode_Upsert",
                 new
                 {
                     data = postcodes.AsTableValuedParameter("dbo.PostcodeDataType")
                 },
-                commandType: CommandType.StoredProcedure);
+                commandType: CommandType.StoredProcedure,
+                commandTimeout: 120);
+        }
+
+        public async Task UpsertPostcodesUsingAdo(IEnumerable<PostcodeLocation> postcodes)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            using var command = new SqlCommand("Postcode_Upsert", connection)
+            {
+                CommandType = CommandType.StoredProcedure,
+                CommandTimeout = 120
+            };
+
+            var tvParam = new SqlParameter()
+            {
+                ParameterName = "@data",
+                TypeName = "dbo.PostcodeDataType",
+                SqlDbType = SqlDbType.Structured,
+                Value = postcodes.ToEnumerableSqlDataRecords()
+            };                  
+
+            command.Parameters.Add(tvParam);
+            
+            connection.Open();
+            command.ExecuteNonQuery();
         }
     }
 }
