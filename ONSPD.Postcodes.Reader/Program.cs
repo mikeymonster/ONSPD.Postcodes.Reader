@@ -32,7 +32,7 @@ await Host.CreateDefaultBuilder(args)
         services
             .AddHostedService<ConsoleHostedService>()
             .AddScoped<IDataRepository>(s => new DataRepository(connectionString))
-            .AddScoped<IPostcodeReaderService, PostcodeReaderService>();
+            .AddScoped<IPostcodeService, PostcodeService>();
     })
     .RunConsoleAsync();
 

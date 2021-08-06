@@ -1,28 +1,31 @@
 ﻿using CsvHelper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ONSPD.Postcodes.Reader.Calculators;
 using ONSPD.Postcodes.Reader.Data;
 using ONSPD.Postcodes.Reader.Model;
+using ONSPD.Postcodes.Reader.Model.Enums;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ONSPD.Postcodes.Reader.Services
 {
-    public class PostcodeReaderService : IPostcodeReaderService
+    public class PostcodeService : IPostcodeService
     {
         private readonly IConfiguration _configuration;
         private readonly IDataRepository _dataRepository;
         private readonly ILogger _logger;
 
-        public PostcodeReaderService(
+        public PostcodeService(
             IConfiguration configuration,
             IDataRepository dataRepository,
-            ILogger<PostcodeReaderService> logger)
+            ILogger<PostcodeService> logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _dataRepository = dataRepository ?? throw new ArgumentNullException(nameof(dataRepository));
@@ -70,10 +73,10 @@ namespace ONSPD.Postcodes.Reader.Services
                     //var hashCode = postcode.Postcode.GetHashCode();
                     //var hashCode = postcode.Postcode;
                     var hashCode = CreateMD5Hash(postcode.Postcode);
-                    if (postcodesDictionary.ContainsKey(hashCode))
-                    {
-                        _logger.LogInformation($"collision for {postcode.Postcode} {postcodesDictionary[hashCode].Postcode}");
-                    }
+                    //if (postcodesDictionary.ContainsKey(hashCode))
+                    //{
+                    //    _logger.LogInformation($"collision for {postcode.Postcode} {postcodesDictionary[hashCode].Postcode}");
+                    //}
 
                     postcodesDictionary.Add(hashCode, postcode);
 
@@ -98,6 +101,61 @@ namespace ONSPD.Postcodes.Reader.Services
 
             //read pcds
             return postcodesDictionary.Count;
+        }
+
+        public async Task<IEnumerable<PostcodeSearchResult>> Search(
+            string postcode,
+            string filter = "OX2%",
+            SearchMethod method = SearchMethod.SqlSpatial)
+        {
+            IEnumerable<PostcodeSearchResult> results = null;
+
+            var stopwatch = Stopwatch.StartNew();
+
+            //Get postcodes
+            //search with Haversine;
+            switch (method)
+            {
+                case SearchMethod.Haversine:
+                    //Get all data, then calculate distances and sort
+                    var fromLatitude = 52.400997;
+                    var fromLongitude = -1.508122;
+
+                    var postcodes = await _dataRepository.GetPostcodes(filter);
+
+                    //stopwatch.Stop();
+                    //_logger.LogInformation($"Get postcodes for Haversine took {stopwatch.ElapsedMilliseconds:#,##0}ms ({stopwatch.ElapsedTicks} ticks)");
+                    //stopwatch.Restart();
+
+                    var unsortedResults = postcodes
+                        .Select(p => new PostcodeSearchResult
+                        {
+                            Postcode = p.Postcode,
+                            Distance = Haversine.Distance(
+                                fromLatitude, fromLongitude,
+                                p.Latitude, p.Longitude)
+                        });
+
+                    //stopwatch.Stop();
+                    //_logger.LogInformation($"Distance calculation using Haversine took {stopwatch.ElapsedMilliseconds:#,##0}ms ({stopwatch.ElapsedTicks} ticks)");
+                    //stopwatch.Restart();
+
+                    results = unsortedResults.OrderBy(p => p.Distance);
+
+                    stopwatch.Stop();
+                    //_logger.LogInformation($"Distance sort for Haversine took {stopwatch.ElapsedMilliseconds:#,##0}ms ({stopwatch.ElapsedTicks} ticks)");
+                    _logger.LogInformation($"Distance search and sort for Haversine took {stopwatch.ElapsedMilliseconds:#,##0}ms ({stopwatch.ElapsedTicks} ticks)");
+                    break;
+                case SearchMethod.SqlSpatial:
+                    //Call data method that calls stored proc
+                    results = await _dataRepository.PerformDistanceSearch(postcode, filter);
+
+                    stopwatch.Stop();
+                    _logger.LogInformation($"Distance search using sql spatial took {stopwatch.ElapsedMilliseconds:#,##0}ms ({stopwatch.ElapsedTicks} ticks)");
+                    break;
+            }
+
+            return results;
         }
 
         private string CreateMD5Hash(string input)

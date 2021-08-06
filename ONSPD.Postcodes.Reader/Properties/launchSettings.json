@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ONSPD.Postcodes.Reader": {
+      "commandName": "Project",
+      "commandLineArgs": "--searchDistance CV1 2WT"
+    }
+  }
+}

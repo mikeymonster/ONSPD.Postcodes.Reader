@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
-using Microsoft.IdentityModel.Protocols;
 using System.Data;
 using System.Data.Common;
 
@@ -32,6 +31,42 @@ namespace ONSPD.Postcodes.Reader.Data
             connection.Open();
             var postcodes = await connection.QueryAsync<PostcodeLocation>("SELECT * FROM Postcode");
             return postcodes;
+        }
+
+        public async Task<IEnumerable<PostcodeLocation>> GetPostcodes(string filter)
+        {
+            //var parameters = new DynamicParameters(new { Filter = filter });
+
+            using var connection = new SqlConnection(_connectionString);
+            connection.Open();
+                       
+            var postcodes = await connection
+                .QueryAsync<PostcodeLocation>(
+                "SELECT * FROM Postcode " +
+                "WHERE Postcode LIKE @Filter " +
+                "  AND [Location] IS NOT NULL",
+                //parameters
+                new { Filter = filter }
+                );
+            return postcodes;
+        }
+
+        public async Task<IEnumerable<PostcodeSearchResult>> PerformDistanceSearch(string postcode, string filter)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@fromPostcode", postcode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@postcodeDestinationSelector", filter, DbType.String, ParameterDirection.Input);
+
+            using var connection = new SqlConnection(_connectionString);
+            connection.Open();
+
+            var results = await connection.QueryAsync<PostcodeSearchResult>(
+                "dbo.Postcode_Distance_Search",
+                parameters,
+                commandType: CommandType.StoredProcedure,
+                commandTimeout: 120);
+
+            return results;
         }
 
         public async Task UpsertPostcodes(IEnumerable<PostcodeLocation> postcodes)

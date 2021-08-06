@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ONSPD.Postcodes.Reader.Model.Enums;
 using ONSPD.Postcodes.Reader.Services;
 
 namespace ONSPD.Postcodes.Reader
@@ -11,18 +13,18 @@ namespace ONSPD.Postcodes.Reader
     {
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _appLifetime;
-        private readonly IPostcodeReaderService _postcodeReaderService;
+        private readonly IPostcodeService _postcodeService;
 
         private int? _exitCode;
 
         public ConsoleHostedService(
             ILogger<ConsoleHostedService> logger,
             IHostApplicationLifetime appLifetime,
-            IPostcodeReaderService postcodeReaderService)
+            IPostcodeService postcodeService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _appLifetime = appLifetime ?? throw new ArgumentNullException(nameof(appLifetime));
-            _postcodeReaderService = postcodeReaderService ?? throw new ArgumentNullException(nameof(postcodeReaderService));
+            _postcodeService = postcodeService ?? throw new ArgumentNullException(nameof(postcodeService));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -35,9 +37,19 @@ namespace ONSPD.Postcodes.Reader
                 Task.Run(async () =>
                 {
                     try
-                    {
-                        var count = await _postcodeReaderService.LoadPostcodes();
-                        Console.WriteLine($"{count} postcodes read");
+                    {                        
+                        if (args.Contains("--loadPostcodes"))
+                        {
+                            Console.WriteLine("Loading postcodes...");
+                            var count = await _postcodeService.LoadPostcodes();
+                            Console.WriteLine($"{count} postcodes found");
+                        }
+
+                        if (args.Contains("--searchDistance"))
+                        {
+                            var searchResults = await _postcodeService.Search("CV1 2WT", "OX%");
+                            var searchResults2 = await _postcodeService.Search("CV1 2WT", "OX%", SearchMethod.Haversine);
+                        }
 
                         _exitCode = 0;
                     }
