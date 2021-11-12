@@ -30,5 +30,4 @@ VALUES
   s.[Longitude]
 );
 
---TODO: Set geometry column
 GO
